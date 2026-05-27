@@ -1,30 +1,35 @@
-# ClassPulse AI 🚀
+ClassPulse AI 🚀
 
-ClassPulse AI is an AI-powered smart attendance management system built using Python, OpenCV, SQLite, and Tkinter.
+AI-powered smart classroom monitoring system using **Face Recognition, YOLOv8, OpenCV, SQLite, and Tkinter**.
+ 
+ ✨ Features
 
-## Features
-- Face Detection
-- Face Recognition
-- Student Registration
-- Automatic Attendance Marking
-- SQLite Database Integration
-- Dashboard GUI
-- Attendance Viewer
-- Student Management
+* Automatic face recognition attendance
+* Real-time phone detection
+* Student engagement monitoring
+* Attention score calculation
+* Attendance & engagement reports
+* Modern teacher dashboard
+* Excel report export
 
-## Technologies Used
-- Python
-- OpenCV
-- Tkinter
-- SQLite
-- NumPy
+ 🛠 Technologies Used
 
-## Future Improvements
-- Phone Detection
-- Attention Scoring
-- Web Application Version
-- Analytics Dashboard
-- YOLO Integration
+* Python
+* OpenCV
+* YOLOv8
+* SQLite
+* Tkinter
 
-## Author
-Raunak Jha
+🚀 Run Project
+
+```bash
+python database_setup.py
+python register_student.py
+python train_model.py
+python dashboard.py
+```
+
+👨‍💻 Author
+
+**Raunak Jha**
+(https://github.com/raunak1303-dotcom)
