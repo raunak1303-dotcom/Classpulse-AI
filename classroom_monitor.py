@@ -75,7 +75,7 @@ while True:
                     2
                 )
 
-    # ================= FACE RECOGNITION + ATTENDANCE =================
+    # ================= FACE RECOGNITION + ATTENDANCE + ENGAGEMENT =================
     for (x, y, w, h) in faces:
         face = gray[y:y+h, x:x+w]
         face = cv2.resize(face, (200, 200))
@@ -142,7 +142,7 @@ while True:
             if phone_detected:
                 student_stats[name]["phone_frames"] += 1
 
-        # ================= DRAW UI ON CAMERA =================
+        # ---------- DRAW FACE UI ----------
         color = (0, 255, 0) if name != "Unknown" else (0, 255, 255)
 
         cv2.rectangle(frame, (x, y), (x+w, y+h), color, 2)
@@ -157,6 +157,7 @@ while True:
             2
         )
 
+    # ================= MAIN SCREEN TITLE =================
     cv2.putText(
         frame,
         "ClassPulse AI - Classroom Monitoring",
@@ -167,15 +168,51 @@ while True:
         2
     )
 
+    # ================= LIVE ALERT SYSTEM =================
+    live_attention_score = 100
+
     if phone_detected:
+        live_attention_score -= 40
+
+    if len(faces) == 0:
+        live_attention_score -= 30
+
+    live_attention_score = max(0, min(100, live_attention_score))
+
+    cv2.putText(
+        frame,
+        f"Live Attention Score: {live_attention_score}%",
+        (20, 80),
+        cv2.FONT_HERSHEY_SIMPLEX,
+        0.8,
+        (255, 255, 0),
+        2
+    )
+
+    if live_attention_score < 50:
+        cv2.rectangle(frame, (15, 100), (520, 160), (0, 0, 255), -1)
+
         cv2.putText(
             frame,
-            "ALERT: Phone Usage Detected",
-            (20, 80),
+            "LOW ENGAGEMENT DETECTED",
+            (25, 140),
             cv2.FONT_HERSHEY_SIMPLEX,
-            0.8,
-            (0, 0, 255),
-            2
+            1,
+            (255, 255, 255),
+            3
+        )
+
+    else:
+        cv2.rectangle(frame, (15, 100), (430, 160), (0, 128, 0), -1)
+
+        cv2.putText(
+            frame,
+            "ENGAGEMENT LEVEL GOOD",
+            (25, 140),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            1,
+            (255, 255, 255),
+            3
         )
 
     cv2.imshow("ClassPulse AI - Classroom Monitor", frame)
