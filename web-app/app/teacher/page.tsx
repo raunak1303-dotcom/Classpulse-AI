@@ -51,10 +51,10 @@ export default function TeacherDashboard() {
 
   useEffect(() => {
     async function loadData() {
-      const statsRes = await fetch("http://127.0.0.1:8000/stats");
-      const studentsRes = await fetch("http://127.0.0.1:8000/students");
-      const attendanceRes = await fetch("http://127.0.0.1:8000/attendance");
-      const engagementRes = await fetch("http://127.0.0.1:8000/engagement");
+      const statsRes = await fetch("https://classpulse-ai.onrender.com/stats");
+      const studentsRes = await fetch("https://classpulse-ai.onrender.com/students");
+      const attendanceRes = await fetch("https://classpulse-ai.onrender.com/attendance");
+      const engagementRes = await fetch("https://classpulse-ai.onrender.com/engagement");
 
       setStats(await statsRes.json());
       setStudents(await studentsRes.json());
@@ -88,7 +88,7 @@ export default function TeacherDashboard() {
           {menuOpen && (
             <div className="absolute right-0 mt-3 w-64 bg-[#111827] rounded-xl shadow-lg overflow-hidden border border-gray-700 z-50">
               <button
-                onClick={() => (window.location.href = "http://127.0.0.1:8000/export-attendance")}
+                onClick={() => (window.location.href = "https://classpulse-ai.onrender.com/export-attendance")}
                 className="w-full text-left px-5 py-4 hover:bg-blue-600 transition"
               >
                 📁 Export Attendance
