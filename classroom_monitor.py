@@ -75,7 +75,7 @@ while True:
                     2
                 )
 
-    # ================= FACE RECOGNITION + ATTENDANCE + ENGAGEMENT =================
+    # ================= FACE RECOGNITION =================
     for (x, y, w, h) in faces:
         face = gray[y:y+h, x:x+w]
         face = cv2.resize(face, (200, 200))
@@ -83,34 +83,45 @@ while True:
         label, confidence = recognizer.predict(face)
 
         if confidence < 50:
-            name = names[label]
+            raw_name = names[label]
         else:
-            name = "Unknown"
+            raw_name = "Unknown"
 
         today = datetime.now().strftime("%Y-%m-%d")
         current_time = datetime.now().strftime("%H:%M:%S")
 
-        if name != "Unknown":
+        # Extract clean name and roll number from filename format: roll_name
+        if raw_name != "Unknown" and "_" in raw_name:
+            extracted_roll, extracted_name = raw_name.split("_", 1)
+        else:
+            extracted_roll = "N/A"
+            extracted_name = raw_name
+
+        display_name = extracted_name if raw_name != "Unknown" else "Unknown"
+
+        if raw_name != "Unknown":
+
+            # ---------- FETCH STUDENT DETAILS ----------
+            cursor.execute("""
+            SELECT roll_no, class_name
+            FROM students
+            WHERE roll_no=? OR name=?
+            """, (extracted_roll, extracted_name))
+
+            student_data = cursor.fetchone()
+
+            if student_data:
+                roll_no, class_name = student_data
+            else:
+                roll_no, class_name = extracted_roll, "N/A"
 
             # ---------- MARK ATTENDANCE ----------
-            if name not in checked_attendance:
-
-                cursor.execute("""
-                SELECT roll_no, class_name FROM students
-                WHERE name=?
-                """, (name,))
-
-                student_data = cursor.fetchone()
-
-                if student_data:
-                    roll_no, class_name = student_data
-                else:
-                    roll_no, class_name = "N/A", "N/A"
+            if extracted_name not in checked_attendance:
 
                 cursor.execute("""
                 SELECT * FROM attendance
                 WHERE name=? AND date=?
-                """, (name, today))
+                """, (extracted_name, today))
 
                 already_marked = cursor.fetchone()
 
@@ -118,38 +129,38 @@ while True:
                     cursor.execute("""
                     INSERT INTO attendance (name, date, time, roll_no, class_name)
                     VALUES (?, ?, ?, ?, ?)
-                    """, (name, today, current_time, roll_no, class_name))
+                    """, (extracted_name, today, current_time, roll_no, class_name))
 
                     conn.commit()
-                    print(f"{name} attendance marked")
+                    print(f"{extracted_name} attendance marked")
 
                 else:
-                    print(f"{name} already marked today")
+                    print(f"{extracted_name} already marked today")
 
-                checked_attendance.add(name)
+                checked_attendance.add(extracted_name)
 
             # ---------- ENGAGEMENT TRACKING ----------
-            if name not in student_stats:
-                student_stats[name] = {
+            if extracted_name not in student_stats:
+                student_stats[extracted_name] = {
                     "total_frames": 0,
                     "face_frames": 0,
                     "phone_frames": 0
                 }
 
-            student_stats[name]["total_frames"] += 1
-            student_stats[name]["face_frames"] += 1
+            student_stats[extracted_name]["total_frames"] += 1
+            student_stats[extracted_name]["face_frames"] += 1
 
             if phone_detected:
-                student_stats[name]["phone_frames"] += 1
+                student_stats[extracted_name]["phone_frames"] += 1
 
         # ---------- DRAW FACE UI ----------
-        color = (0, 255, 0) if name != "Unknown" else (0, 255, 255)
+        color = (0, 255, 0) if raw_name != "Unknown" else (0, 255, 255)
 
         cv2.rectangle(frame, (x, y), (x+w, y+h), color, 2)
 
         cv2.putText(
             frame,
-            name,
+            display_name,
             (x, y-10),
             cv2.FONT_HERSHEY_SIMPLEX,
             0.8,
@@ -179,41 +190,54 @@ while True:
 
     live_attention_score = max(0, min(100, live_attention_score))
 
-    cv2.putText(
+    # ================= CLASSPULSE METER =================
+    bar_x = 20
+    bar_y = 80
+    bar_width = 300
+    bar_height = 30
+
+    filled_width = int((live_attention_score / 100) * bar_width)
+
+    if live_attention_score >= 70:
+        meter_color = (0, 200, 0)
+    elif live_attention_score >= 40:
+        meter_color = (0, 215, 255)
+    else:
+        meter_color = (0, 0, 255)
+
+    cv2.rectangle(
         frame,
-        f"Live Attention Score: {live_attention_score}%",
-        (20, 80),
-        cv2.FONT_HERSHEY_SIMPLEX,
-        0.8,
-        (255, 255, 0),
+        (bar_x, bar_y),
+        (bar_x + bar_width, bar_y + bar_height),
+        (50, 50, 50),
+        -1
+    )
+
+    cv2.rectangle(
+        frame,
+        (bar_x, bar_y),
+        (bar_x + filled_width, bar_y + bar_height),
+        meter_color,
+        -1
+    )
+
+    cv2.rectangle(
+        frame,
+        (bar_x, bar_y),
+        (bar_x + bar_width, bar_y + bar_height),
+        (255, 255, 255),
         2
     )
 
-    if live_attention_score < 50:
-        cv2.rectangle(frame, (15, 100), (520, 160), (0, 0, 255), -1)
-
-        cv2.putText(
-            frame,
-            "LOW ENGAGEMENT DETECTED",
-            (25, 140),
-            cv2.FONT_HERSHEY_SIMPLEX,
-            1,
-            (255, 255, 255),
-            3
-        )
-
-    else:
-        cv2.rectangle(frame, (15, 100), (430, 160), (0, 128, 0), -1)
-
-        cv2.putText(
-            frame,
-            "ENGAGEMENT LEVEL GOOD",
-            (25, 140),
-            cv2.FONT_HERSHEY_SIMPLEX,
-            1,
-            (255, 255, 255),
-            3
-        )
+    cv2.putText(
+        frame,
+        f"ClassPulse: {live_attention_score}%",
+        (bar_x, bar_y - 10),
+        cv2.FONT_HERSHEY_SIMPLEX,
+        0.8,
+        (255, 255, 255),
+        2
+    )
 
     cv2.imshow("ClassPulse AI - Classroom Monitor", frame)
 
@@ -224,8 +248,6 @@ while True:
 end_time = time.time()
 session_duration = end_time - start_time
 today = datetime.now().strftime("%Y-%m-%d")
-
-print("\n===== CLASSROOM MONITORING REPORT =====\n")
 
 for name, stats in student_stats.items():
     total = stats["total_frames"]
@@ -242,13 +264,6 @@ for name, stats in student_stats.items():
         status = "Low Engagement"
     else:
         status = "Acceptable"
-
-    print(f"Student: {name}")
-    print(f"Face Presence: {face_presence:.2f}%")
-    print(f"Phone Usage: {phone_usage:.2f}%")
-    print(f"Attention Score: {attention_score:.2f}%")
-    print(f"Status: {status}")
-    print("-" * 40)
 
     cursor.execute("""
     INSERT INTO engagement (

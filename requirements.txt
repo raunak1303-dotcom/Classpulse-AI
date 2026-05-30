@@ -1,0 +1,11 @@
+opencv-contrib-python
+ultralytics
+openpyxl
+numpy
+pillow
+mediapipe
+matplotlib
+fastapi
+uvicorn
+pydantic
+python-multipart
