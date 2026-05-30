@@ -4,7 +4,14 @@ import { useRef, useState } from "react";
 
 export default function RegisterPage() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
+
+  const [name, setName] = useState("");
+  const [rollNo, setRollNo] = useState("");
+  const [className, setClassName] = useState("");
+  const [phone, setPhone] = useState("");
+
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
   async function startCamera() {
     try {
@@ -17,6 +24,44 @@ export default function RegisterPage() {
       }
     } catch {
       setError("Camera permission denied or webcam not available.");
+    }
+  }
+
+  async function registerStudent() {
+    setError("");
+    setSuccess("");
+
+    try {
+      const response = await fetch(
+        "http://127.0.0.1:8000/register-student",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            name,
+            roll_no: rollNo,
+            class_name: className,
+            phone,
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.detail || "Registration failed");
+      }
+
+      setSuccess("✅ Student registered successfully!");
+
+      setName("");
+      setRollNo("");
+      setClassName("");
+      setPhone("");
+    } catch (err: any) {
+      setError(err.message || "Registration failed");
     }
   }
 
@@ -33,20 +78,61 @@ export default function RegisterPage() {
             Register student details and capture face for ClassPulse AI.
           </p>
 
-          <div className="flex flex-col gap-5">
-            <input className="bg-[#0f172a] p-4 rounded-xl outline-none" placeholder="Student Name" />
-            <input className="bg-[#0f172a] p-4 rounded-xl outline-none" placeholder="Roll Number" />
-            <input className="bg-[#0f172a] p-4 rounded-xl outline-none" placeholder="Class / Section" />
-            <input className="bg-[#0f172a] p-4 rounded-xl outline-none" placeholder="Phone Number" />
+          {success && (
+            <div className="bg-green-600 p-3 rounded-xl mb-4">
+              {success}
+            </div>
+          )}
 
-            <button className="bg-blue-600 hover:bg-blue-700 p-4 rounded-xl font-bold">
+          {error && (
+            <div className="bg-red-600 p-3 rounded-xl mb-4">
+              {error}
+            </div>
+          )}
+
+          <div className="flex flex-col gap-5">
+
+            <input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="bg-[#0f172a] p-4 rounded-xl outline-none"
+              placeholder="Student Name"
+            />
+
+            <input
+              value={rollNo}
+              onChange={(e) => setRollNo(e.target.value)}
+              className="bg-[#0f172a] p-4 rounded-xl outline-none"
+              placeholder="Roll Number"
+            />
+
+            <input
+              value={className}
+              onChange={(e) => setClassName(e.target.value)}
+              className="bg-[#0f172a] p-4 rounded-xl outline-none"
+              placeholder="Class / Section"
+            />
+
+            <input
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              className="bg-[#0f172a] p-4 rounded-xl outline-none"
+              placeholder="Phone Number"
+            />
+
+            <button
+              onClick={registerStudent}
+              className="bg-blue-600 hover:bg-blue-700 p-4 rounded-xl font-bold"
+            >
               Register Student
             </button>
           </div>
         </div>
 
         <div className="flex flex-col items-center">
-          <h2 className="text-2xl font-bold mb-5">Face Capture</h2>
+          <h2 className="text-2xl font-bold mb-5">
+            Face Capture
+          </h2>
 
           <video
             ref={videoRef}
@@ -56,8 +142,6 @@ export default function RegisterPage() {
             className="rounded-2xl border-4 border-cyan-500 w-full max-w-md bg-black"
           />
 
-          {error && <p className="text-red-400 mt-4">{error}</p>}
-
           <button
             onClick={startCamera}
             className="bg-green-600 hover:bg-green-700 mt-6 px-6 py-4 rounded-xl font-bold"
@@ -65,7 +149,9 @@ export default function RegisterPage() {
             Start Camera
           </button>
 
-          <button className="bg-cyan-600 hover:bg-cyan-700 mt-4 px-6 py-4 rounded-xl font-bold">
+          <button
+            className="bg-cyan-600 hover:bg-cyan-700 mt-4 px-6 py-4 rounded-xl font-bold"
+          >
             Capture Face
           </button>
         </div>
