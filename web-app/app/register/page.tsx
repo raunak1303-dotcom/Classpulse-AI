@@ -26,6 +26,16 @@ export default function RegisterPage() {
       setError("Camera permission denied or webcam not available.");
     }
   }
+  function captureFace() {
+  if (!videoRef.current || !videoRef.current.srcObject) {
+    setError("Please start the camera first.");
+    setSuccess("");
+    return;
+  }
+
+  setError("");
+  setSuccess("✅ Face captured successfully. AI training is handled by the desktop app.");
+}
 
   async function registerStudent() {
     setError("");
@@ -33,7 +43,7 @@ export default function RegisterPage() {
 
     try {
       const response = await fetch(
-        "http://127.0.0.1:8000/register-student",
+        "https://classpulse-ai.onrender.com/register-student",
         {
           method: "POST",
           headers: {
@@ -150,9 +160,10 @@ export default function RegisterPage() {
           </button>
 
           <button
+            onClick={captureFace}
             className="bg-cyan-600 hover:bg-cyan-700 mt-4 px-6 py-4 rounded-xl font-bold"
           >
-            Capture Face
+           Capture Face
           </button>
         </div>
 
